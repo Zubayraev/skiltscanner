@@ -22,6 +22,8 @@ import com.yourpackage.skiltscanner.database.ScanRepository
 import com.yourpackage.skiltscanner.databinding.ActivityMainBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -69,7 +71,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(ExperimentalGetImage::class) private fun startCamera() {
+    @OptIn(ExperimentalGetImage::class)
+    private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
@@ -138,47 +141,94 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchVehicleInfo(licensePlate: String) {
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.Main) {
             try {
-                runOnUiThread {
-                    binding.progressBar.visibility = View.VISIBLE
-                    binding.tvLicensePlate.text = licensePlate
+                binding.progressBar.visibility = View.VISIBLE
+                binding.tvLicensePlate.text = licensePlate
+
+                println("=== STARTER API KALL ===")
+                println("Kjennemerke: $licensePlate")
+
+                val response = withContext(Dispatchers.IO) {
+                    vegvesenApi.getVehicleInfo(licensePlate, API_KEY)
                 }
 
-                val response = vegvesenApi.getVehicleInfo(licensePlate, API_KEY)
+                // DEBUG LOGGING
+                println("=== API RESPONS ===")
+                println("kjoretoydataListe size: ${response.kjoretoydataListe?.size}")
+
                 val vehicleData = response.kjoretoydataListe?.firstOrNull()
+                println("vehicleData er null? ${vehicleData == null}")
 
-                runOnUiThread {
-                    binding.progressBar.visibility = View.GONE
+                if (vehicleData != null) {
+                    println("godkjenning: ${vehicleData.godkjenning}")
+                    println("tekniskGodkjenning: ${vehicleData.godkjenning?.tekniskGodkjenning}")
+                    println("tekniskeData: ${vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData}")
+                    println("generelt: ${vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt}")
 
-                    if (vehicleData != null) {
-                        val merke = vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.merke?.firstOrNull()?.merke ?: "Ukjent"
-                        val modell = vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.handelsbetegnelse?.firstOrNull() ?: "Ukjent"
-                        val aarsmodell = vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.arsmodell ?: "Ukjent"
-                        val euKontroll = vehicleData.periodiskKjoretoyKontroll?.kontrollfrist ?: "Ikke tilgjengelig"
+                    val generelt = vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt
+                    println("merke list: ${generelt?.merke}")
+                    println("handelsbetegnelse: ${generelt?.handelsbetegnelse}")
+                    println("aarsmodell: ${generelt?.aarsmodell}")
+                    println("periodiskKjoretoyKontroll: ${vehicleData.periodiskKjoretoyKontroll}")
+                    println("kontrollfrist: ${vehicleData.periodiskKjoretoyKontroll?.kontrollfrist}")
+                }
+                println("=== SLUTT RESPONS ===")
 
-                        updateUI(merke, modell, aarsmodell, euKontroll)
+                binding.progressBar.visibility = View.GONE
 
-                        // Lagre i database
-                        saveToDatabase(licensePlate, merke, modell, aarsmodell, euKontroll)
-                    } else {
-                        showNoDataFound()
-                    }
+                if (vehicleData != null) {
+                    val merke = vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.merke?.firstOrNull()?.merke ?: "Ukjent"
+                    val modell = vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.handelsbetegnelse?.firstOrNull() ?: "Ukjent"
+                    val aarsmodell = vehicleData.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.aarsmodell ?: "Ukjent"
+                    val euKontroll = vehicleData.periodiskKjoretoyKontroll?.kontrollfrist ?: "Ikke tilgjengelig"
+
+                    println("=== EKSTRAHERT DATA ===")
+                    println("Merke: $merke")
+                    println("Modell: $modell")
+                    println("Årsmodell: $aarsmodell")
+                    println("EU: $euKontroll")
+                    println("=======================")
+
+                    updateUI(merke, modell, aarsmodell, euKontroll)
+                    saveToDatabase(licensePlate, merke, modell, aarsmodell, euKontroll)
+                } else {
+                    println("vehicleData er NULL!")
+                    showNoDataFound()
                 }
 
-                // Vent 5 sekunder før ny scanning kan skje
                 delay(5000)
                 isProcessing = false
 
+            } catch (e: retrofit2.HttpException) {
+                binding.progressBar.visibility = View.GONE
+                val errorBody = e.response()?.errorBody()?.string()
+                println("=== HTTP ERROR ===")
+                println("Status code: ${e.code()}")
+                println("Error body: $errorBody")
+                println("==================")
+
+                Toast.makeText(
+                    this@MainActivity,
+                    "HTTP feil ${e.code()}: Kunne ikke hente data",
+                    Toast.LENGTH_LONG
+                ).show()
+                delay(3000)
+                isProcessing = false
+
             } catch (e: Exception) {
-                runOnUiThread {
-                    binding.progressBar.visibility = View.GONE
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Feil ved henting av data: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                binding.progressBar.visibility = View.GONE
+                println("=== GENERELL FEIL ===")
+                println("Exception: ${e.javaClass.simpleName}")
+                println("Message: ${e.message}")
+                e.printStackTrace()
+                println("=====================")
+
+                Toast.makeText(
+                    this@MainActivity,
+                    "Feil: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
                 delay(3000)
                 isProcessing = false
             }
@@ -209,10 +259,7 @@ class MainActivity : AppCompatActivity() {
                 euKontroll = euKontroll
             )
             repository.insert(scanHistory)
-
-            runOnUiThread {
-                Toast.makeText(this@MainActivity, "Lagret i historikk", Toast.LENGTH_SHORT).show()
-            }
+            Toast.makeText(this@MainActivity, "Lagret i historikk", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -221,33 +268,29 @@ class MainActivity : AppCompatActivity() {
             val count = repository.getCount()
 
             if (count == 0) {
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Ingen historikk enda", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(this@MainActivity, "Ingen historikk enda", Toast.LENGTH_SHORT).show()
                 return@launch
             }
 
             repository.allHistory.collect { historyList ->
                 if (historyList.isNotEmpty()) {
-                    runOnUiThread {
-                        val items = historyList.map { history ->
-                            val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-                            val date = dateFormat.format(Date(history.timestamp))
-                            "${history.licensePlate} - ${history.merke} ${history.modell} ($date)"
-                        }.toTypedArray()
+                    val items = historyList.map { history ->
+                        val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+                        val date = dateFormat.format(Date(history.timestamp))
+                        "${history.licensePlate} - ${history.merke} ${history.modell} ($date)"
+                    }.toTypedArray()
 
-                        AlertDialog.Builder(this@MainActivity)
-                            .setTitle("Skannings Historikk (${historyList.size})")
-                            .setItems(items) { _, which ->
-                                val selected = historyList[which]
-                                displayHistoryItem(selected)
-                            }
-                            .setNegativeButton("Lukk", null)
-                            .setNeutralButton("Slett alt") { _, _ ->
-                                confirmDeleteAll()
-                            }
-                            .show()
-                    }
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Skannings Historikk (${historyList.size})")
+                        .setItems(items) { _, which ->
+                            val selected = historyList[which]
+                            displayHistoryItem(selected)
+                        }
+                        .setNegativeButton("Lukk", null)
+                        .setNeutralButton("Slett alt") { _, _ ->
+                            confirmDeleteAll()
+                        }
+                        .show()
                 }
             }
         }
@@ -268,9 +311,7 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Ja") { _, _ ->
                 lifecycleScope.launch {
                     repository.deleteAll()
-                    runOnUiThread {
-                        Toast.makeText(this@MainActivity, "Historikk slettet", Toast.LENGTH_SHORT).show()
-                    }
+                    Toast.makeText(this@MainActivity, "Historikk slettet", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Nei", null)

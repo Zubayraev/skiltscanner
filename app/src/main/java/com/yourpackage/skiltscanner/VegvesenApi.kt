@@ -16,7 +16,7 @@ interface VegvesenApi {
     ): VehicleResponse
 
     companion object {
-        private const val BASE_URL = "https://www.vegvesen.no/ws/no/vegvesen/kjoretoy/felles/datautlevering/enkeltoppslag/kjoretoydata/"
+        private const val BASE_URL = "https://www.vegvesen.no/ws/no/vegvesen/kjoretoy/felles/datautlevering/"
 
         fun create(): VegvesenApi {
             val logging = HttpLoggingInterceptor().apply {
