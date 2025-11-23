@@ -1,5 +1,5 @@
 package com.yourpackage.skiltscanner.database
-
+// her er http verdiene vi har for å kalle og hente kjøretøyinformasjon
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 

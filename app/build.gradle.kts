@@ -1,17 +1,17 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp")  // Fjern version herfra, den kommer fra project-level
+    id("com.google.devtools.ksp")
 }
 
 android {
     namespace = "com.yourpackage.skiltscanner"
-    compileSdk = 34  // Oppgradert fra 34
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.yourpackage.skiltscanner"
         minSdk = 24
-        targetSdk = 34  // Oppgradert fra 34
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
@@ -27,7 +27,7 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17  // Minimum for AGP 8.7
+        sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
@@ -41,7 +41,7 @@ android {
 }
 
 dependencies {
-    // Samme som før
+
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")

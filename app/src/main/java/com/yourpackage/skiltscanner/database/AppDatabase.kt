@@ -1,5 +1,5 @@
 package com.yourpackage.skiltscanner.database
-
+// her bruker vi room som database i henhold til anbefaling i faget som en lokal database
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room

@@ -1,5 +1,5 @@
 package com.yourpackage.skiltscanner.database
-
+// dette er filen for entitetene som innebærer historikken (databasen)
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 

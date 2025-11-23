@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/background_dark">
 
-    <!-- Camera Preview -->
+
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="0dp"
@@ -15,7 +15,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Overlay Guide -->
+
     <View
         android:layout_width="280dp"
         android:layout_height="100dp"
@@ -25,7 +25,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Info Card -->
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardInfo"
         android:layout_width="0dp"
@@ -44,7 +44,7 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Title -->
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -53,7 +53,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
-            <!-- License Plate -->
+
             <TextView
                 android:id="@+id/tvLicensePlate"
                 android:layout_width="wrap_content"
@@ -64,14 +64,13 @@
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
-            <!-- Divider -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginVertical="12dp"
                 android:background="@color/divider" />
 
-            <!-- Vehicle Info -->
+
             <TextView
                 android:id="@+id/tvMerke"
                 android:layout_width="wrap_content"
@@ -108,7 +107,7 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="16sp" />
 
-            <!-- Loading Indicator -->
+
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"

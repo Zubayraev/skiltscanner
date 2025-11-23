@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     // Database
     private lateinit var repository: ScanRepository
 
-    // VIKTIG: Sett inn din API-nøkkel her!
+
     private val API_KEY = "326da191-a32a-4892-9a7b-495cd60e6298"
 
     private var isProcessing = false
@@ -50,13 +50,12 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialiser database
+
         val database = AppDatabase.getDatabase(this)
         repository = ScanRepository(database.scanHistoryDao())
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        // Klikk for å vise historikk
         binding.cardInfo.setOnLongClickListener {
             showHistoryDialog()
             true
@@ -123,7 +122,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 .addOnFailureListener {
-                    // Ignorer feil
+
                 }
                 .addOnCompleteListener {
                     imageProxy.close()
@@ -134,7 +133,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun extractLicensePlate(text: String): String? {
-        // Norsk registreringsnummer: 2 bokstaver + 5 tall (f.eks AB12345)
+
         val regex = Regex("[A-Z]{2}\\s?\\d{5}")
         val match = regex.find(text.uppercase().replace(" ", ""))
         return match?.value?.replace(" ", "")
